@@ -20,6 +20,7 @@ export async function getStaticProps() {
     props: {
       todos: todoData.data.listTodos.items,
     },
+    revalidate: 1, // Every second revalidate static props
   };
 }
 
