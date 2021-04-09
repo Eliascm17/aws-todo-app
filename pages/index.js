@@ -1,11 +1,11 @@
-import { useState } from "react";
 import Amplify, { API } from "aws-amplify";
-import config from "../src/aws-exports";
-import { listTodos as ListTodos } from "../src/graphql/queries";
-import { createTodo as CreateTodo } from "../src/graphql/mutations";
-import Todo from "../components/Todo";
+import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
-import AddTodo from "../components/AddTodo";
+import Todo from "../components/Todo";
+import config from "../src/aws-exports";
+import { createTodo as CreateTodo } from "../src/graphql/mutations";
+import { listTodos as ListTodos } from "../src/graphql/queries";
+import { onCreateTodo as OnCreateTodo } from "../src/graphql/subscriptions";
 
 const CLIENT_ID = uuid();
 
@@ -57,9 +57,8 @@ export default function Home({ todos }) {
       </div>
       <div className="flex flex-col max-w-md min-w-full mx-auto justify-center">
         <div className="flex mx-auto mb-2 max-w-2xl w-full justify-end align-end">
-          {/* <div className="flex-end"> */}
           <button
-            className="bg-blue-400 rounded-md w-40 h-11 text-white text-xl justify-center"
+            className="hover:bg-blue-600 active:bg-blue-600 bg-blue-400 rounded-md w-40 h-11 text-white text-xl justify-center"
             onClick={() => {
               setShowModal(true);
             }}
@@ -84,7 +83,7 @@ export default function Home({ todos }) {
             </div>
           </button>
           <button
-            className="w-11 h-11 ml-2 focus:bg-green-500 bg-green-400 rounded-md w-3 h-5 text-white text-xl justify-center"
+            className="w-11 h-11 ml-2 hover:bg-yellow-400 active:bg-yellow-400 bg-yellow-300 rounded-md w-3 h-5 text-white text-xl justify-center"
             onClick={() => {
               setEditing(!editing);
             }}
@@ -106,7 +105,6 @@ export default function Home({ todos }) {
               </svg>
             </div>
           </button>
-          {/* </div> */}
         </div>
         <div className="flex flex-col mx-auto my-4 min-w-full">
           {todos.map((todo) => (
