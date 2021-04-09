@@ -54,7 +54,7 @@ export default function Home({ todos }) {
         Next.js + AWS Amplify Todo App
       </div>
       <div className="flex flex-col max-w-md min-w-full mx-auto justify-center">
-        <div className="self-end">
+        <div className="self-end mr-4">
           <button
             className="bg-blue-400 rounded-md mr-24 w-40 h-11 text-white text-xl justify-center"
             onClick={() => {
