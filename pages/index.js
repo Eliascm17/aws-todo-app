@@ -1,65 +1,176 @@
-import Head from 'next/head'
-import styles from '../styles/Home.module.css'
+import { useState } from "react";
+import Amplify, { API } from "aws-amplify";
+import config from "../src/aws-exports";
+import { listTodos as ListTodos } from "../src/graphql/queries";
+import { createTodo as CreateTodo } from "../src/graphql/mutations";
+import Todo from "../components/Todo";
+import { v4 as uuid } from "uuid";
+import AddTodo from "../components/AddTodo";
 
-export default function Home() {
+const CLIENT_ID = uuid();
+
+Amplify.configure(config);
+
+export async function getStaticProps() {
+  const todoData = await API.graphql({
+    query: ListTodos,
+  });
+
+  return {
+    props: {
+      todos: todoData.data.listTodos.items,
+    },
+  };
+}
+
+export default function Home({ todos }) {
+  const [showModal, setShowModal] = useState(false);
+  const [todoInput, setTodoInput] = useState("");
+  const [description, setDescription] = useState("");
+
+  const createTodo = async (todo, description) => {
+    const note = {
+      name: todo,
+      description,
+      clientId: CLIENT_ID,
+      completed: false,
+      id: uuid(),
+    };
+
+    try {
+      await API.graphql({
+        query: CreateTodo,
+        variables: { input: note },
+      });
+      console.log("successfully created note!");
+    } catch (err) {
+      console.log("error: ", err);
+    }
+  };
+
   return (
-    <div className={styles.container}>
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
-
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p>
-
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
+    <div className="flex flex-col max-w-4xl mx-auto justify-center">
+      <div className="text-gray-800 text-6xl my-10 text-center">
+        Next.js + AWS Amplify Todo App
+      </div>
+      <div className="flex flex-col max-w-md min-w-full mx-auto justify-center">
+        <div className="self-end">
+          <button
+            className="bg-blue-400 rounded-md mr-24 w-40 h-11 text-white text-xl justify-center"
+            onClick={() => {
+              setShowModal(true);
+            }}
           >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
+            <div className="flex justify-center">
+              Add Todo
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="mt-1.5 ml-2"
+              >
+                <path
+                  fill-rule="evenodd"
+                  clip-rule="evenodd"
+                  d="M8 0C8.3031 0 8.5938 0.120408 8.80812 0.334735C9.02245 0.549062 9.14286 0.839753 9.14286 1.14286V6.85714H14.8571C15.1602 6.85714 15.4509 6.97755 15.6653 7.19188C15.8796 7.40621 16 7.6969 16 8C16 8.3031 15.8796 8.5938 15.6653 8.80812C15.4509 9.02245 15.1602 9.14286 14.8571 9.14286H9.14286V14.8571C9.14286 15.1602 9.02245 15.4509 8.80812 15.6653C8.5938 15.8796 8.3031 16 8 16C7.6969 16 7.40621 15.8796 7.19188 15.6653C6.97755 15.4509 6.85714 15.1602 6.85714 14.8571V9.14286H1.14286C0.839753 9.14286 0.549062 9.02245 0.334735 8.80812C0.120408 8.5938 0 8.3031 0 8C0 7.6969 0.120408 7.40621 0.334735 7.19188C0.549062 6.97755 0.839753 6.85714 1.14286 6.85714H6.85714V1.14286C6.85714 0.839753 6.97755 0.549062 7.19188 0.334735C7.40621 0.120408 7.6969 0 8 0Z"
+                  fill="white"
+                />
+              </svg>
+            </div>
+          </button>
         </div>
-      </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+        <div className="flex flex-col mx-auto my-4 min-w-full">
+          {todos.map((todo) => (
+            <Todo
+              className="flex w-2xl w-full max-w-2xl mx-auto my-2 h-20 bg-white rounded-md shadow-md"
+              key={todo.id}
+              {...todo}
+            />
+          ))}
+        </div>
+      </div>
+      {showModal ? (
+        <div
+          class="fixed z-10 inset-0 overflow-y-auto"
+          aria-labelledby="modal-title"
+          role="dialog"
+          aria-modal="true"
         >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
-        </a>
-      </footer>
+          <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div
+              class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+              aria-hidden="true"
+            ></div>
+
+            <span
+              class="hidden sm:inline-block sm:align-middle sm:h-screen"
+              aria-hidden="true"
+            >
+              &#8203;
+            </span>
+
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex">
+                  <div class="mt-3 text-center sm:mt-0 sm:mx-2 sm:text-left w-full">
+                    <h3
+                      class="text-lg leading-6 font-medium text-gray-900"
+                      id="modal-title"
+                    >
+                      Create Todo
+                    </h3>
+                    <div>
+                      <input
+                        type="text"
+                        placeholder="Enter a new Todo"
+                        name="todo"
+                        id="todo"
+                        value={todoInput}
+                        onChange={(e) => setTodoInput(e.target.value)}
+                        class="mt-2 pl-2 py-2 text-4xl focus:ring-indigo-500 ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      ></input>
+                      <textarea
+                        id="description"
+                        name="description"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        rows="3"
+                        class="shadow-sm pl-2 py-2 focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full text-sm border-gray-300 rounded-md"
+                        placeholder="description"
+                      ></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowModal(false);
+                    createTodo(todoInput, description);
+                    setDescription("");
+                    setTodoInput("");
+                  }}
+                  class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-400 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  Add Todo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowModal(false);
+                  }}
+                  class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
-  )
+  );
 }
