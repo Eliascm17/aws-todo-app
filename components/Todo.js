@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { API } from "aws-amplify";
 import { updateTodo as UpdateTodo } from "../src/graphql/mutations";
+import { deleteTodo as DeleteTodo } from "../src/graphql/mutations";
 
-const Todo = ({ completed, name, description, className, id }) => {
+const Todo = ({ completed, name, description, className, id, editing }) => {
   const [finished, setFinished] = useState(completed);
+  const [deleteButtonClicked, setDeleteButtonClicked] = useState(false);
 
   const updateTodoCompleted = async (id) => {
     console.log(id, !finished);
@@ -17,6 +19,18 @@ const Todo = ({ completed, name, description, className, id }) => {
       console.log("note successfully updated!");
     } catch (err) {
       console.log("error: ", err);
+    }
+  };
+
+  const deleteTodo = async (id) => {
+    try {
+      await API.graphql({
+        query: DeleteTodo,
+        variables: { input: { id } },
+      });
+      console.log("successfully deleted note!");
+    } catch (err) {
+      console.log({ err });
     }
   };
 
@@ -79,20 +93,107 @@ const Todo = ({ completed, name, description, className, id }) => {
           </button>
         )}
       </div>
-      <div className="my-auto mr-6">
+      <div className="flex my-auto mr-6 w-full justify-between">
         {finished ? (
-          <>
+          <div className="flex flex-col">
             <div className="text-lg text-gray-700 line-through">{name}</div>
             <div className="text-sm text-gray-700 line-through">
               {description}
             </div>
-          </>
+          </div>
         ) : (
-          <>
+          <div className="flex flex-col">
             <div className="text-lg text-gray-700">{name}</div>
             <div className="text-sm text-gray-700">{description}</div>
-          </>
+          </div>
         )}
+        {editing ? (
+          <button
+            className="flex-end"
+            onClick={() => {
+              setDeleteButtonClicked(true);
+            }}
+          >
+            <svg
+              className="w-8 h-8 text-red-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+          </button>
+        ) : null}
+        {deleteButtonClicked ? (
+          <div
+            class="fixed z-10 inset-0 overflow-y-auto"
+            aria-labelledby="modal-title"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+              <div
+                class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                aria-hidden="true"
+              ></div>
+
+              <span
+                class="hidden sm:inline-block sm:align-middle sm:h-screen"
+                aria-hidden="true"
+              >
+                &#8203;
+              </span>
+
+              <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                  <div class="sm:flex">
+                    <div class="mt-3 text-center sm:mt-0 sm:mx-2 sm:text-left w-full">
+                      <h3
+                        class="text-lg leading-6 font-medium text-gray-900"
+                        id="modal-title"
+                      >
+                        Delte Todo
+                      </h3>
+                      <h3
+                        class="text-sm leading-6 font-medium text-gray-700"
+                        id="modal-title"
+                      >
+                        Are you sure you want to delete this todo?
+                      </h3>
+                    </div>
+                  </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeleteButtonClicked(false);
+                      deleteTodo(id);
+                    }}
+                    class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-400 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  >
+                    Delete
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeleteButtonClicked(false);
+                    }}
+                    class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

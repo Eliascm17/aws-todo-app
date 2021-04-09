@@ -5,7 +5,7 @@ module.exports = {
     extend: {},
   },
   variants: {
-    extend: {},
+    extend: { ringOpacity: ["hover", "active"] },
   },
   plugins: [],
 };

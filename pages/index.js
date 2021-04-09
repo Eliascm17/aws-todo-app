@@ -26,6 +26,7 @@ export async function getStaticProps() {
 
 export default function Home({ todos }) {
   const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [todoInput, setTodoInput] = useState("");
   const [description, setDescription] = useState("");
 
@@ -52,12 +53,13 @@ export default function Home({ todos }) {
   return (
     <div className="flex flex-col max-w-4xl mx-auto justify-center">
       <div className="text-gray-800 text-6xl my-10 text-center">
-        Next.js + AWS Amplify Todo App
+        Next.js + AWS Amplify + TailwindCSS Todo App
       </div>
       <div className="flex flex-col max-w-md min-w-full mx-auto justify-center">
-        <div className="self-end mr-4">
+        <div className="flex mx-auto mb-2 max-w-2xl w-full justify-end align-end">
+          {/* <div className="flex-end"> */}
           <button
-            className="bg-blue-400 rounded-md mr-24 w-40 h-11 text-white text-xl justify-center"
+            className="bg-blue-400 rounded-md w-40 h-11 text-white text-xl justify-center"
             onClick={() => {
               setShowModal(true);
             }}
@@ -81,11 +83,36 @@ export default function Home({ todos }) {
               </svg>
             </div>
           </button>
+          <button
+            className="w-11 h-11 ml-2 focus:bg-green-500 bg-green-400 rounded-md w-3 h-5 text-white text-xl justify-center"
+            onClick={() => {
+              setEditing(!editing);
+            }}
+          >
+            <div>
+              <svg
+                className="w-6 h-6 text-gray-900 mx-auto flex-shrink-0 flex items-center justify-center"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                ></path>
+              </svg>
+            </div>
+          </button>
+          {/* </div> */}
         </div>
         <div className="flex flex-col mx-auto my-4 min-w-full">
           {todos.map((todo) => (
             <Todo
               className="flex w-2xl w-full max-w-2xl mx-auto my-2 h-20 bg-white rounded-md shadow-md"
+              editing={editing}
               key={todo.id}
               {...todo}
             />
