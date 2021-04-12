@@ -1,12 +1,13 @@
 import Amplify, { API } from "aws-amplify";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { v4 as uuid } from "uuid";
 import Todo from "../components/Todo";
 import config from "../src/aws-exports";
-import { createTodo as CreateTodo } from "../src/graphql/mutations";
+import {
+  createTodo as CreateTodo,
+  deleteTodo as DeleteTodo,
+} from "../src/graphql/mutations";
 import { listTodos as ListTodos } from "../src/graphql/queries";
-import { onDeleteTodo } from "../src/graphql/subscriptions";
-import { deleteTodo as DeleteTodo } from "../src/graphql/mutations";
 
 const CLIENT_ID = uuid();
 
