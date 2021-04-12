@@ -3,12 +3,19 @@ import { API } from "aws-amplify";
 import { updateTodo as UpdateTodo } from "../src/graphql/mutations";
 import { deleteTodo as DeleteTodo } from "../src/graphql/mutations";
 
-const Todo = ({ completed, name, description, className, id, editing }) => {
+const Todo = ({
+  completed,
+  name,
+  description,
+  className,
+  id,
+  editing,
+  onClickDelete,
+}) => {
   const [finished, setFinished] = useState(completed);
   const [deleteButtonClicked, setDeleteButtonClicked] = useState(false);
 
   const updateTodoCompleted = async (id) => {
-    console.log(id, !finished);
     try {
       await API.graphql({
         query: UpdateTodo,
@@ -158,7 +165,7 @@ const Todo = ({ completed, name, description, className, id, editing }) => {
                         class="text-lg leading-6 font-medium text-gray-900"
                         id="modal-title"
                       >
-                        Delte Todo
+                        Delete Todo
                       </h3>
                       <h3
                         class="text-sm leading-6 font-medium text-gray-700"
@@ -173,8 +180,8 @@ const Todo = ({ completed, name, description, className, id, editing }) => {
                   <button
                     type="button"
                     onClick={() => {
+                      onClickDelete();
                       setDeleteButtonClicked(false);
-                      deleteTodo(id);
                     }}
                     class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-400 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
                   >

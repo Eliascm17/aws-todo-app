@@ -5,7 +5,8 @@ import Todo from "../components/Todo";
 import config from "../src/aws-exports";
 import { createTodo as CreateTodo } from "../src/graphql/mutations";
 import { listTodos as ListTodos } from "../src/graphql/queries";
-import { onCreateTodo, onDeleteTodo } from "../src/graphql/subscriptions";
+import { onDeleteTodo } from "../src/graphql/subscriptions";
+import { deleteTodo as DeleteTodo } from "../src/graphql/mutations";
 
 const CLIENT_ID = uuid();
 
@@ -31,35 +32,6 @@ export default function Home({ todos }) {
   const [todoInput, setTodoInput] = useState("");
   const [description, setDescription] = useState("");
 
-  useEffect(() => {
-    // on create subscription
-    const subscriptionCreateNote = API.graphql({
-      query: onCreateTodo,
-    }).subscribe({
-      next: (todoData) => {
-        const todo = todoData.value.data.onCreateTodo;
-        setListOfTodos((list) => [...list, { ...todo }]);
-        if (CLIENT_ID === todo.clientId) return;
-      },
-    });
-
-    //on delete subscription
-    const subscriptionDeleteNote = API.graphql({
-      query: onDeleteTodo,
-    }).subscribe({
-      next: (todoData) => {
-        const todo = todoData.value.data.onDeleteTodo;
-        setListOfTodos(listOfTodos.filter((list) => list.id !== todo.id));
-        if (CLIENT_ID === todo.clientId) return;
-      },
-    });
-
-    return () => {
-      subscriptionCreateNote.unsubscribe();
-      subscriptionDeleteNote.unsubscribe();
-    };
-  }, []);
-
   const createTodo = async (todo, description) => {
     const newTodo = {
       name: todo,
@@ -69,6 +41,8 @@ export default function Home({ todos }) {
       id: uuid(),
     };
 
+    setListOfTodos((list) => [...list, { ...newTodo }]);
+
     try {
       await API.graphql({
         query: CreateTodo,
@@ -77,6 +51,25 @@ export default function Home({ todos }) {
       console.log("successfully created note!");
     } catch (err) {
       console.log("error: ", err);
+    }
+  };
+
+  const deleteTodo = async (id) => {
+    const index = listOfTodos.findIndex((t) => t.id === id);
+    const todos = [
+      ...listOfTodos.slice(0, index),
+      ...listOfTodos.slice(index + 1),
+    ];
+    setListOfTodos(todos);
+
+    try {
+      await API.graphql({
+        query: DeleteTodo,
+        variables: { input: { id } },
+      });
+      console.log("successfully deleted note!");
+    } catch (err) {
+      console.log({ err });
     }
   };
 
@@ -104,7 +97,7 @@ export default function Home({ todos }) {
                 className="mt-1.5 ml-2"
               >
                 <path
-                  fill-rule="evenodd"
+                  fillRule="evenodd"
                   clip-rule="evenodd"
                   d="M8 0C8.3031 0 8.5938 0.120408 8.80812 0.334735C9.02245 0.549062 9.14286 0.839753 9.14286 1.14286V6.85714H14.8571C15.1602 6.85714 15.4509 6.97755 15.6653 7.19188C15.8796 7.40621 16 7.6969 16 8C16 8.3031 15.8796 8.5938 15.6653 8.80812C15.4509 9.02245 15.1602 9.14286 14.8571 9.14286H9.14286V14.8571C9.14286 15.1602 9.02245 15.4509 8.80812 15.6653C8.5938 15.8796 8.3031 16 8 16C7.6969 16 7.40621 15.8796 7.19188 15.6653C6.97755 15.4509 6.85714 15.1602 6.85714 14.8571V9.14286H1.14286C0.839753 9.14286 0.549062 9.02245 0.334735 8.80812C0.120408 8.5938 0 8.3031 0 8C0 7.6969 0.120408 7.40621 0.334735 7.19188C0.549062 6.97755 0.839753 6.85714 1.14286 6.85714H6.85714V1.14286C6.85714 0.839753 6.97755 0.549062 7.19188 0.334735C7.40621 0.120408 7.6969 0 8 0Z"
                   fill="white"
@@ -127,9 +120,9 @@ export default function Home({ todos }) {
                 xmlns="http://www.w3.org/2000/svg"
               >
                 <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
                   d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
                 ></path>
               </svg>
@@ -142,6 +135,9 @@ export default function Home({ todos }) {
               className="flex w-2xl w-full max-w-2xl mx-auto my-2 h-20 bg-white rounded-md shadow-md"
               editing={editing}
               key={todo.id}
+              onClickDelete={() => {
+                deleteTodo(todo.id);
+              }}
               {...todo}
             />
           ))}
