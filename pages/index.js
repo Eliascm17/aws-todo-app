@@ -5,7 +5,7 @@ import Todo from "../components/Todo";
 import config from "../src/aws-exports";
 import { createTodo as CreateTodo } from "../src/graphql/mutations";
 import { listTodos as ListTodos } from "../src/graphql/queries";
-import { onCreateTodo as OnCreateTodo } from "../src/graphql/subscriptions";
+import { onCreateTodo, onDeleteTodo } from "../src/graphql/subscriptions";
 
 const CLIENT_ID = uuid();
 
@@ -25,13 +25,43 @@ export async function getStaticProps() {
 }
 
 export default function Home({ todos }) {
+  const [listOfTodos, setListOfTodos] = useState(todos);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(false);
   const [todoInput, setTodoInput] = useState("");
   const [description, setDescription] = useState("");
 
+  useEffect(() => {
+    // on create subscription
+    const subscriptionCreateNote = API.graphql({
+      query: onCreateTodo,
+    }).subscribe({
+      next: (todoData) => {
+        const todo = todoData.value.data.onCreateTodo;
+        setListOfTodos((list) => [...list, { ...todo }]);
+        if (CLIENT_ID === todo.clientId) return;
+      },
+    });
+
+    //on delete subscription
+    const subscriptionDeleteNote = API.graphql({
+      query: onDeleteTodo,
+    }).subscribe({
+      next: (todoData) => {
+        const todo = todoData.value.data.onDeleteTodo;
+        setListOfTodos(listOfTodos.filter((list) => list.id !== todo.id));
+        if (CLIENT_ID === todo.clientId) return;
+      },
+    });
+
+    return () => {
+      subscriptionCreateNote.unsubscribe();
+      subscriptionDeleteNote.unsubscribe();
+    };
+  }, []);
+
   const createTodo = async (todo, description) => {
-    const note = {
+    const newTodo = {
       name: todo,
       description,
       clientId: CLIENT_ID,
@@ -42,7 +72,7 @@ export default function Home({ todos }) {
     try {
       await API.graphql({
         query: CreateTodo,
-        variables: { input: note },
+        variables: { input: newTodo },
       });
       console.log("successfully created note!");
     } catch (err) {
@@ -106,8 +136,8 @@ export default function Home({ todos }) {
             </div>
           </button>
         </div>
-        <div className="flex flex-col mx-auto my-4 min-w-full">
-          {todos.map((todo) => (
+        <div className="flex flex-col mx-auto my-4 min-w-full mb-10">
+          {listOfTodos.map((todo) => (
             <Todo
               className="flex w-2xl w-full max-w-2xl mx-auto my-2 h-20 bg-white rounded-md shadow-md"
               editing={editing}
