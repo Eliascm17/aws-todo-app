@@ -42,13 +42,14 @@ export default function Home({ todos }) {
       id: uuid(),
     };
 
-    setListOfTodos((list) => [...list, { ...newTodo }]);
-
     try {
       await API.graphql({
         query: CreateTodo,
         variables: { input: newTodo },
       });
+
+      setListOfTodos((list) => [...list, { ...newTodo }]);
+
       console.log("successfully created note!");
     } catch (err) {
       console.log("error: ", err);
@@ -56,18 +57,19 @@ export default function Home({ todos }) {
   };
 
   const deleteTodo = async (id) => {
-    const index = listOfTodos.findIndex((t) => t.id === id);
-    const todos = [
-      ...listOfTodos.slice(0, index),
-      ...listOfTodos.slice(index + 1),
-    ];
-    setListOfTodos(todos);
-
     try {
       await API.graphql({
         query: DeleteTodo,
         variables: { input: { id } },
       });
+
+      const index = listOfTodos.findIndex((t) => t.id === id);
+      const todos = [
+        ...listOfTodos.slice(0, index),
+        ...listOfTodos.slice(index + 1),
+      ];
+      setListOfTodos(todos);
+
       console.log("successfully deleted note!");
     } catch (err) {
       console.log({ err });
